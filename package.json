@@ -1,0 +1,6 @@
+{
+  "name": "site",
+  "version": "1.0.0",
+  "main": "vless-ws.js",
+  "dependencies": { "ws": "^8.14.2" }
+}
