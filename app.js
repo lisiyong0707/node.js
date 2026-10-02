@@ -26,7 +26,7 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 const DOMAIN = process.env.DOMAIN || 'example.com';
 const NAME = process.env.NAME || 'vless-node';
 const WS_PATH = process.env.WS_PATH || '/ws';
-const UUID = process.env.UUID || crypto.randomUUID();
+const UUID = process.env.UUID || 'a03b9c14-3e17-42db-bf9d-dcb52923fe6b';
 const SUB_PATH = process.env.SUB_PATH || crypto.randomBytes(12).toString('hex');
 const ALLOW_PRIVATE = process.env.ALLOW_PRIVATE === '1';
 const CONNECT_TIMEOUT = 10_000;
