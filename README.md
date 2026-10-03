@@ -8,7 +8,6 @@
 wget -N https://raw.githubusercontent.com/lisiyong0707/node.js/main/deploy.sh && \
 APP_URL=https://raw.githubusercontent.com/lisiyong0707/node.js/main/app.js \
 UUID=你的uuid PORT=可用端口 DOMAIN=你的域名 bash deploy.sh
-```
 
 ---
 
