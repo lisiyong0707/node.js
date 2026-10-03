@@ -5,8 +5,9 @@ wget -N https://raw.githubusercontent.com/lisiyong0707/node.js/main/deploy.sh &&
 APP_URL=https://raw.githubusercontent.com/lisiyong0707/node.js/main/app.js \
 UUID=你的uuid PORT=可用端口 DOMAIN=你的域名 bash deploy.sh
 ```
-```wget -N https://raw.githubusercontent.com/lisiyong0707/node.js/main/deploy.sh && \
-DOMAIN=webse6-lylcloudflare.lylsub.pp.ua bash deploy.sh
+```bash
+wget -N https://raw.githubusercontent.com/lisiyong0707/node.js/main/deploy.sh && \
+DOMAIN=域名 bash deploy.sh
 ```
 本文面向完全没接触过服务器的新手，讲解如何把 `vless-ws.js` 部署到**带 Node.js 面板的虚拟主机或容器**上。
 
