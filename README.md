@@ -1,14 +1,14 @@
 # vless-ws.js 零基础部署说明
-
+```bash
+wget -N https://raw.githubusercontent.com/lisiyong0707/node.js/main/deploy.sh && \
+APP_URL=https://raw.githubusercontent.com/lisiyong0707/node.js/main/app.js \
+UUID=你的uuid PORT=可用端口 DOMAIN=你的域名 bash deploy.sh
+```
 本文面向完全没接触过服务器的新手，讲解如何把 `vless-ws.js` 部署到**带 Node.js 面板的虚拟主机或容器**上。
 
 > **使用前请先确认**：很多免费主机的服务条款禁止运行代理服务，违规可能导致账号被停。请先阅读你所用平台的条款，风险由使用者自行承担。本文不涉及任何规避平台检测或保活的方法。
 > **一键脚本**：
->```bash
-wget -N https://raw.githubusercontent.com/lisiyong0707/node.js/main/deploy.sh && \
-APP_URL=https://raw.githubusercontent.com/lisiyong0707/node.js/main/app.js \
-UUID=你的uuid PORT=可用端口 DOMAIN=你的域名 bash deploy.sh
-
+>
 ---
 
 ## 一、先了解几个名词
