@@ -36,12 +36,13 @@ if [ -f .env ]; then
   OLD_UUID="$(grep -E '^UUID=' .env | cut -d= -f2- | tr -d '"' || true)"
   OLD_WS="$(grep -E '^WS_PATH=' .env | cut -d= -f2- | tr -d '"' || true)"
   OLD_SUB="$(grep -E '^SUB_PATH=' .env | cut -d= -f2- | tr -d '"' || true)"
+  OLD_PORT="$(grep -E '^PORT=' .env | cut -d= -f2- | tr -d '"' || true)"
 fi
 
 DOMAIN="${DOMAIN:-}"
 [ -n "$DOMAIN" ] || die "请设置 DOMAIN，例如 DOMAIN=example.com"
 UUID="${UUID:-${OLD_UUID:-$(cat /proc/sys/kernel/random/uuid)}}"
-PORT="${PORT:-3000}"
+PORT="${PORT:-${OLD_PORT:-$((RANDOM % 50001 + 10000))}}"
 WS_PATH="${WS_PATH:-${OLD_WS:-/ws-$(rand_hex 6)}}"
 SUB_PATH="${SUB_PATH:-${OLD_SUB:-$(rand_hex 12)}}"
 NAME="${NAME:-vless-node}"
