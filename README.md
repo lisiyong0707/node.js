@@ -4,11 +4,11 @@
 
 > **使用前请先确认**：很多免费主机的服务条款禁止运行代理服务，违规可能导致账号被停。请先阅读你所用平台的条款，风险由使用者自行承担。本文不涉及任何规避平台检测或保活的方法。
 > **一键脚本**：
-> ```
-> wget -N https://raw.githubusercontent.com/lisiyong0707/node.js/main/deploy.sh && \
-  APP_URL=https://raw.githubusercontent.com/lisiyong0707/node.js/main/app.js \
-  UUID=你的uuid PORT=可用端口 DOMAIN=你的域名 bash deploy.sh
->```
+>```bash
+wget -N https://raw.githubusercontent.com/lisiyong0707/node.js/main/deploy.sh && \
+APP_URL=https://raw.githubusercontent.com/lisiyong0707/node.js/main/app.js \
+UUID=你的uuid PORT=可用端口 DOMAIN=你的域名 bash deploy.sh
+```
 
 ---
 
