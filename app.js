@@ -3,30 +3,54 @@
  * VLESS over WebSocket 服务端（仅 TCP）。
  * TLS 由平台 / Caddy / Nginx / Cloudflare 终结，本程序只监听明文 HTTP。
  *
- * 环境变量：
- *   UUID           认证用 UUID（留空则每次启动随机生成）
+ * 配置来源（优先级从高到低）：
+ *   1. 环境变量
+ *   2. 配置文件 ~/.vless-panel.env（或 CONFIG_FILE 指定的路径），格式 KEY=VALUE
+ *
+ * 可用配置：
+ *   UUID           认证用 UUID（都没有则每次启动随机生成）
  *   PORT           监听端口（托管平台会自动注入）
- *   DOMAIN         你的域名，用于生成分享链接
+ *   DOMAIN         域名；不填则订阅页按你访问时用的域名生成链接
  *   PUBLIC_PORT    对外端口，默认 443
  *   NAME           节点名称，默认 vless-node
  *   WS_PATH        WebSocket 路径，默认 /ws
- *   SUB_PATH       订阅路径，默认 lyl（访问 https://域名/lyl 查看分享链接）
+ *   SUB_PATH       订阅路径；不填则随机（每次启动会变，建议固定）
  *   ALLOW_PRIVATE  设为 1 才允许访问内网/回环地址，默认禁止
  */
 
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const http = require('http');
 const net = require('net');
 const dns = require('dns').promises;
 const crypto = require('crypto');
 const { WebSocketServer, createWebSocketStream } = require('ws');
 
+/* ---------------- 读取配置 ---------------- */
+
+(function loadConfigFile() {
+  const file = process.env.CONFIG_FILE || path.join(os.homedir(), '.vless-panel.env');
+  try {
+    for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);
+      if (!m || line.trim().startsWith('#')) continue;
+      if (process.env[m[1]] === undefined) process.env[m[1]] = m[2];
+    }
+  } catch { /* 没有配置文件就只用环境变量 */ }
+  // 去掉值两端误带的引号（面板里粘贴时常见）
+  for (const k of ['UUID', 'DOMAIN', 'PUBLIC_PORT', 'NAME', 'WS_PATH', 'SUB_PATH', 'ALLOW_PRIVATE']) {
+    if (process.env[k] !== undefined) process.env[k] = process.env[k].trim().replace(/^["']|["']$/g, '');
+  }
+})();
+
 const PORT = process.env.PORT || 3000;
-const DOMAIN = process.env.DOMAIN || 'example.com';
+const DOMAIN = process.env.DOMAIN || '';
 const PUBLIC_PORT = process.env.PUBLIC_PORT || '443';
 const NAME = process.env.NAME || 'vless-node';
 const WS_PATH = '/' + (process.env.WS_PATH || '/ws').replace(/^\/+/, '');
 const UUID = process.env.UUID || crypto.randomUUID();
-const SUB_PATH = (process.env.SUB_PATH || 'lyl').replace(/^\/+/, '');
+const SUB_PATH = (process.env.SUB_PATH || crypto.randomBytes(12).toString('hex')).replace(/^\/+/, '');
 const ALLOW_PRIVATE = process.env.ALLOW_PRIVATE === '1';
 
 const HANDSHAKE_TIMEOUT = 10_000;
@@ -145,15 +169,20 @@ function parseHeader(msg) {
 
 /* ---------------- HTTP 服务 ---------------- */
 
-const shareLink =
-  `vless://${UUID}@${DOMAIN}:${PUBLIC_PORT}?encryption=none&security=tls&sni=${DOMAIN}` +
-  `&fp=chrome&type=ws&host=${DOMAIN}&path=${encodeURIComponent(WS_PATH)}#${encodeURIComponent(NAME)}`;
+// DOMAIN 未配置时，按访问时的 Host 头生成链接
+function buildLink(reqHost) {
+  const d = DOMAIN || String(reqHost || '').split(':')[0] || 'example.com';
+  return (
+    `vless://${UUID}@${d}:${PUBLIC_PORT}?encryption=none&security=tls&sni=${d}` +
+    `&fp=chrome&type=ws&host=${d}&path=${encodeURIComponent(WS_PATH)}#${encodeURIComponent(NAME)}`
+  );
+}
 
 const server = http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
   if (url === `/${SUB_PATH}`) {
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-    return res.end(shareLink + '\n');
+    return res.end(buildLink(req.headers.host) + '\n');
   }
   const page = PAGES[url.replace(/\/+$/, '') || '/'];
   res.writeHead(page ? 200 : 404, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -165,8 +194,8 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ noServer: true, maxPayload: 4 * 1024 * 1024 });
 
 server.on('upgrade', (req, socket, head) => {
-  const path = (req.url || '').split('?')[0];
-  if (path !== WS_PATH) {
+  const reqPath = (req.url || '').split('?')[0];
+  if (reqPath !== WS_PATH) {
     // 与普通 404 保持一致，避免被探测
     const body = Buffer.from(NOT_FOUND);
     socket.on('error', () => {});
@@ -233,7 +262,7 @@ wss.on('connection', (ws) => {
       sock.on('close', () => {
         // 正常结束：先让剩余数据刷给客户端，再兜底清理
         if (duplex && !duplex.destroyed) duplex.end();
-        setTimeout(cleanup, 3000);
+        setTimeout(cleanup, 10_000);
       });
 
       connectTimer = setTimeout(cleanup, CONNECT_TIMEOUT);
@@ -255,6 +284,6 @@ wss.on('connection', (ws) => {
 server.listen(PORT, () => {
   console.log(`listening on :${PORT}`);
   console.log(`订阅路径: /${SUB_PATH}`);
-  console.log(`分享链接: ${shareLink}`);
+  if (DOMAIN) console.log(`分享链接: ${buildLink()}`);
   if (!process.env.UUID) console.log('提示：未设置 UUID，本次为随机生成，重启后会变化。');
 });
