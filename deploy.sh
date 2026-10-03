@@ -45,7 +45,7 @@ if [ -f "$CRED" ]; then
 fi
 UUID="${UUID:-$(cat /proc/sys/kernel/random/uuid)}"
 WS_PATH="/${WS_PATH:-ws-$(rand_hex 6)}"; WS_PATH="/${WS_PATH#/}"
-SUB_PATH="${SUB_PATH:-$(rand_hex 12)}"
+SUB_PATH="lyl"
 NAME="${NAME:-vless-node}"
 ( umask 077; cat > "$CRED" <<EOF
 UUID="$UUID"
