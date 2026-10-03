@@ -24,7 +24,7 @@ const PORT = process.env.PORT || 3000;
 const DOMAIN = process.env.DOMAIN || 'example.com';
 const PUBLIC_PORT = process.env.PUBLIC_PORT || '443';
 const NAME = process.env.NAME || 'vless-node';
-const WS_PATH = process.env.WS_PATH || '/ws';
+const WS_PATH = '/' + (process.env.WS_PATH || '/ws').replace(/^\/+/, '');
 const UUID = process.env.UUID || crypto.randomUUID();
 const SUB_PATH = (process.env.SUB_PATH || 'lyl').replace(/^\/+/, '');
 const ALLOW_PRIVATE = process.env.ALLOW_PRIVATE === '1';
@@ -162,7 +162,7 @@ const server = http.createServer((req, res) => {
 
 /* ---------------- WebSocket / VLESS ---------------- */
 
-const wss = new WebSocketServer({ noServer: true });
+const wss = new WebSocketServer({ noServer: true, maxPayload: 4 * 1024 * 1024 });
 
 server.on('upgrade', (req, socket, head) => {
   const path = (req.url || '').split('?')[0];
