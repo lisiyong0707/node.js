@@ -9,9 +9,8 @@
 #   APP_ROOT   应用目录，默认 ~/domains/$DOMAIN/public_html
 #   UUID / WS_PATH / SUB_PATH / NAME   不填则随机生成并记住
 #
-# 本脚本做：激活 Node 环境 → 下载 app.js → 写 package.json → npm install
-#           → 尝试触发重启 → 打印需要粘贴到面板的环境变量
-# 本脚本不做：设置面板环境变量（请在面板里手动填写，然后 SAVE + RESTART）
+# 本脚本做：激活 Node 环境 → 下载 app.js → 写 package.json → npm install → 生成并保存配置
+# 之后只需在面板里 SAVE + RESTART，不用再填环境变量
 
 set -euo pipefail
 
@@ -50,6 +49,7 @@ SUB_PATH="${SUB_PATH:-$(rand_hex 12)}"
 NAME="${NAME:-vless-node}"
 ( umask 077; cat > "$CRED" <<EOF
 UUID="$UUID"
+DOMAIN="$DOMAIN"
 WS_PATH="$WS_PATH"
 SUB_PATH="$SUB_PATH"
 NAME="$NAME"
@@ -75,7 +75,11 @@ cat > package.json <<'EOF'
 EOF
 
 say "安装依赖"
-npm install --omit=dev --no-audit --no-fund >/dev/null 2>&1 || die "npm install 失败，请检查网络"
+if ! UV_THREADPOOL_SIZE=1 NODE_OPTIONS=--max-old-space-size=256 \
+     npm install --omit=dev --no-audit --no-fund --maxsockets=1 >/tmp/npm-install.log 2>&1; then
+  tail -n 20 /tmp/npm-install.log
+  die "npm install 失败（可能是资源限额或网络），可改用面板的 Run NPM Install 按钮"
+fi
 node -e "require('ws')" || die "ws 安装异常"
 
 if [ -f index.html ] || [ -f index.php ]; then
@@ -89,22 +93,17 @@ mkdir -p tmp && touch tmp/restart.txt
 cat <<EOF
 
 ========================================================
-文件和依赖已就绪。请到面板完成最后一步：
+文件、依赖和配置都已就绪，配置保存在 $CRED（权限 600）。
+程序会自己读取该文件，面板里不需要再填环境变量。
 
-1) Application mode 选 Production，Startup file 保持 app.js
-2) 在 Environment variables 里添加（不要设 PORT）：
+最后一步：到面板
+  1) Application mode 选 Production，Startup file 保持 app.js
+  2) 点 SAVE，再点 RESTART
+  （如果之前在面板里手填过环境变量，环境变量优先于配置文件，
+    建议全部删除，避免两边不一致。）
 
-   UUID      = $UUID
-   DOMAIN    = $DOMAIN
-   WS_PATH   = $WS_PATH
-   SUB_PATH  = $SUB_PATH
-   NAME      = $NAME
-
-3) 点 SAVE，再点 RESTART
-4) 浏览器访问：
+然后访问：
    https://$DOMAIN/            （应为博客页面）
-   https://$DOMAIN/$SUB_PATH   （取分享链接）
-
-凭据已保存在 $CRED（权限 600），重复运行本脚本会沿用。
+   https://$DOMAIN/$SUB_PATH   （取分享链接，直接导入客户端）
 ========================================================
 EOF
