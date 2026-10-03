@@ -8,13 +8,13 @@
  *   2. 配置文件 ~/.vless-panel.env（或 CONFIG_FILE 指定的路径），格式 KEY=VALUE
  *
  * 可用配置：
- *   UUID           认证用 UUID（都没有则每次启动随机生成）
+ *   UUID           认证用 UUID；不填则用代码里的默认值，填 random 则每次启动随机生成
  *   PORT           监听端口（托管平台会自动注入）
  *   DOMAIN         域名；不填则订阅页按你访问时用的域名生成链接
  *   PUBLIC_PORT    对外端口，默认 443
  *   NAME           节点名称，默认 vless-node
  *   WS_PATH        WebSocket 路径，默认 /ws
- *   SUB_PATH       订阅路径；不填则随机（每次启动会变，建议固定）
+ *   SUB_PATH       订阅路径；不填则默认 lyl，填 random 则每次启动随机生成
  *   ALLOW_PRIVATE  设为 1 才允许访问内网/回环地址，默认禁止
  */
 
@@ -49,8 +49,10 @@ const DOMAIN = process.env.DOMAIN || '';
 const PUBLIC_PORT = process.env.PUBLIC_PORT || '443';
 const NAME = process.env.NAME || 'vless-node';
 const WS_PATH = '/' + (process.env.WS_PATH || '/ws').replace(/^\/+/, '');
-const UUID = process.env.UUID || crypto.randomUUID();
-const SUB_PATH = (process.env.SUB_PATH || crypto.randomBytes(12).toString('hex')).replace(/^\/+/, '');
+const UUID = (process.env.UUID === 'random' ? crypto.randomUUID() : process.env.UUID) || 'f40e8e60-bde8-4999-ba7a-073d5ef89758';
+const SUB_PATH = ((process.env.SUB_PATH === 'random'
+  ? crypto.randomBytes(12).toString('hex')
+  : process.env.SUB_PATH) || 'lyl').replace(/^\/+/, '');
 const ALLOW_PRIVATE = process.env.ALLOW_PRIVATE === '1';
 
 const HANDSHAKE_TIMEOUT = 10_000;
