@@ -1,6 +1,10 @@
 # vless-ws.js 零基础部署说明
 **一键脚本**：
 ```bash
+wget -N https://raw.githubusercontent.com/lisiyong0707/node.js/main/panel.sh && DOMAIN=你的域名 bash panel.sh
+```
+
+```bash
 wget -N https://raw.githubusercontent.com/lisiyong0707/node.js/main/deploy-panel.sh && DOMAIN=你的域名 bash deploy-panel.sh
 ```
 ```bash
